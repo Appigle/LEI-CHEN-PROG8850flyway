@@ -13,17 +13,51 @@ jobs:
 
       - name: Deploy to Database
         env:
-          DB_HOST: ${{ secrets.DB_HOST || '127.0.0.1' }} 
+          DB_HOST: ${{ secrets.DB_HOST || '127.0.0.1' }}
           DB_USER: ${{ secrets.DB_ADMIN_USER || 'root' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD  || 'Secret5555'}}
           DB_NAME: ${{ secrets.DB_NAME || 'mysql' }}
         run: mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME < schema_changes.sql
       - name: pull flyway
         run: docker pull redgate/flyway
-      - name: Run migrations
+      - name: Run initial migrations
         env:
-          DB_HOST: ${{ secrets.DB_HOST || '172.17.0.1' }} 
+          DB_HOST: ${{ secrets.DB_HOST || '172.17.0.1' }}
           DB_USER: ${{ secrets.DB_ADMIN_USER || 'root' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD  || 'Secret5555'}}
-          REPO_NAME: ${{ github.event.repository.name || 'PROG8850flyway'}}
+          REPO_NAME: ${{ github.event.repository.name || 'LEI-CHEN-PROG8850flyway'}}
         run: docker run --rm -v "/workspaces/$REPO_NAME/migrations:/flyway/sql" redgate/flyway -user=$DB_USER -password=$DB_PASSWORD -url=jdbc:mysql://$DB_HOST:3306/flyway_test migrate
+
+      - name: Run subscriber incremental migrations
+        env:
+          DB_HOST: ${{ secrets.DB_HOST || '172.17.0.1' }}
+          SUBSCRIBER_USER: ${{ secrets.SUBSCRIBER_USER || 'subscriber_user' }}
+          SUBSCRIBER_PASSWORD: ${{ secrets.SUBSCRIBER_PASSWORD || 'SubscriberPass123' }}
+          REPO_NAME: ${{ github.event.repository.name || 'LEI-CHEN-PROG8850flyway'}}
+        run: docker run --rm -v "/workspaces/$REPO_NAME/subscriber_migrations:/flyway/sql" redgate/flyway -user=$SUBSCRIBER_USER -password=$SUBSCRIBER_PASSWORD -url=jdbc:mysql://$DB_HOST:3306/subscriber_db migrate
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run CRUD tests
+        env:
+          DB_HOST: ${{ secrets.DB_HOST || '172.17.0.1' }}
+          SUBSCRIBER_USER: ${{ secrets.SUBSCRIBER_USER || 'subscriber_user' }}
+          SUBSCRIBER_PASSWORD: ${{ secrets.SUBSCRIBER_PASSWORD || 'SubscriberPass123' }}
+        run: python -m pytest tests/ -v
+
+      - name: Deployment Complete
+        run: |
+          echo "🚀 Deployment Successfully Completed!"
+          echo "✅ Database migrations applied"
+          echo "✅ Subscriber system deployed"
+          echo "✅ All CRUD tests passed"
+          echo "📅 Deployment completed at: $(date)"
+          echo "🎉 System ready for use!"
