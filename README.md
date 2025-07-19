@@ -173,3 +173,5 @@ Add to `.github/workflows/mysql_action.yml`:
 - name: Deployment Complete
   run: echo "🚀 Deployment Successfully Completed!"
 ```
+
+![github-action-result](./screenshots/github-action-result.png)
