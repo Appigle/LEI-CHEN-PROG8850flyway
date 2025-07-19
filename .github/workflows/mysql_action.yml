@@ -43,14 +43,14 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST || '127.0.0.1' }}
           DB_USER: ${{ secrets.DB_ADMIN_USER || 'root' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD  || 'Secret5555'}}
-        run: docker run --rm --network="host" -v "${{ github.workspace }}/migrations:/flyway/sql" redgate/flyway -user=$DB_USER -password=$DB_PASSWORD -url=jdbc:mysql://$DB_HOST:3306/flyway_test?allowPublicKeyRetrieval=true&useSSL=false migrate
+        run: docker run --rm --network="host" -v "${{ github.workspace }}/migrations:/flyway/sql" redgate/flyway -user=$DB_USER -password=$DB_PASSWORD -url="jdbc:mysql://$DB_HOST:3306/flyway_test?allowPublicKeyRetrieval=true&useSSL=false" migrate
 
       - name: Run subscriber incremental migrations
         env:
           DB_HOST: ${{ secrets.DB_HOST || '127.0.0.1' }}
           SUBSCRIBER_USER: ${{ secrets.SUBSCRIBER_USER || 'subscriber_user' }}
           SUBSCRIBER_PASSWORD: ${{ secrets.SUBSCRIBER_PASSWORD || 'SubscriberPass123' }}
-        run: docker run --rm --network="host" -v "${{ github.workspace }}/subscriber_migrations:/flyway/sql" redgate/flyway -user=$SUBSCRIBER_USER -password=$SUBSCRIBER_PASSWORD -url=jdbc:mysql://$DB_HOST:3306/subscriber_db migrate
+        run: docker run --rm --network="host" -v "${{ github.workspace }}/subscriber_migrations:/flyway/sql" redgate/flyway -user=$SUBSCRIBER_USER -password=$SUBSCRIBER_PASSWORD -url="jdbc:mysql://$DB_HOST:3306/subscriber_db?allowPublicKeyRetrieval=true&useSSL=false" migrate
 
       - name: Set up Python
         uses: actions/setup-python@v4
